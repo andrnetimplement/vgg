@@ -42,6 +42,38 @@ optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
 num_epoch = 25
 for epoch in range(num_epoch):
-    pass
+    for phase in ['train','valid']:
+        if phase == 'train':
+            model.train()
+        else:
+            model.eval()
+    
+    running_loss = 0.0
+    running_corrects = 0
+    
+    for inputs, labels in dataloaders[phase]:
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        
+        optimizer.zero_grad()
+        
+        with torch.set_grad_enabled(phase=='train'):
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            loss = criterion(outputs, labels)
+            
+            if phase == 'train':
+                loss.backward()
+                optimizer.step()
+                
+        running_loss += loss.item() * inputs.size(0)
+        running_corrects += torch.sum(preds == labels.data)
+    epoch_loss = running_loss / dataset_sizes[phase]
+    epoch_acc = running_corrects.double() / dataset_sizes[phase]
+    
+    print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
+    
+print('Training complete')
+
     
 
