@@ -68,5 +68,11 @@ def vgg16(pretrained=False, **kwargs):
         model.load_state_dict(torch.load('vgg16.pth'))
     return model
 
+def vgg19(pretrained=False, **kwargs):
+    model = VGG(make_layers(cfg['E']), **kwargs)
+    if pretrained:
+        model.load_state_dict(torch.load('vgg19.pth'))
+    return model
+
 
         

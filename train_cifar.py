@@ -5,26 +5,28 @@ import torchvision
 import torchvision.transforms as transforms
 from torchvision import models
 from torch.utils.data import DataLoader
+from model import vgg19
 
+model19 = vgg19(pretrained=False)
+model19.classifier[6] = nn.Linear(4096, 10)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model19 = model19.to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model19.parameters(), lr=0.001, momentum=0.9)
 
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 
+BATCH_SIZE = 512
+
 train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
 test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=2)
-test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=2)
-
-model = models.vgg16(pretrained=False)
-model.classifier[6] = nn.Linear(4096, 10)
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 
 def train_model(model, train_loader, test_loader, criterion, optimizer, num_epochs=25):
     for epoch in range(num_epochs):
@@ -81,5 +83,5 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, num_epoc
 
     return model
 
-model = train_model(model, train_loader, test_loader, criterion, optimizer, num_epochs=10)
-
+model19 = train_model(model19, train_loader, test_loader, criterion, optimizer, num_epochs=150)
+torch.save(model19, 'vgg_models/model19_cifar10.pth')
